@@ -61,6 +61,7 @@ class MicroPythonModuleConfigurable(private val module: Module) : Configurable {
     if (enabledCheckbox.isSelected) {
       if (facet != null) {
         panel.apply(facet.configuration, facet)
+        FacetManager.getInstance(module).facetConfigurationChanged(facet)
         facet.updateLibrary()
       }
       else {
@@ -80,7 +81,7 @@ class MicroPythonModuleConfigurable(private val module: Module) : Configurable {
     }
   }
 
-  override fun createComponent(): JComponent? {
+  override fun createComponent(): JComponent {
     val mainPanel = JPanel()
     with(mainPanel) {
       layout = BorderLayout()

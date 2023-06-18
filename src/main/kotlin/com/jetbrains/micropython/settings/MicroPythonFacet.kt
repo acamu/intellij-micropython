@@ -40,7 +40,7 @@ import com.jetbrains.python.facet.LibraryContributingFacet
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import javax.swing.JComponent
 
@@ -55,7 +55,7 @@ class MicroPythonFacet(facetType: FacetType<out Facet<*>, *>, module: Module, na
     private const val PLUGIN_ID = "intellij-micropython"
 
     val scriptsPath: String
-      get() = "${pluginDescriptor.path}/scripts"
+      get() = "${pluginDescriptor.pluginPath}/scripts"
 
     private val pluginDescriptor: IdeaPluginDescriptor
       get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID)) ?:
@@ -69,10 +69,12 @@ class MicroPythonFacet(facetType: FacetType<out Facet<*>, *>, module: Module, na
   override fun updateLibrary() {
     val plugin = pluginDescriptor
     val boardHintsPaths = configuration.deviceProvider.typeHints?.paths?.map {
-      "${plugin.path}/typehints/$it"
+      "${plugin.pluginPath}/typehints/$it"
     } ?: emptyList()
-    FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython", boardHintsPaths)
-    removeLegacyLibraries()
+    ApplicationManager.getApplication().invokeLater {
+      FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython", boardHintsPaths)
+      removeLegacyLibraries()
+    }
   }
 
   override fun removeLibrary() {
@@ -82,7 +84,7 @@ class MicroPythonFacet(facetType: FacetType<out Facet<*>, *>, module: Module, na
   fun checkValid(): ValidationResult {
     val provider = configuration.deviceProvider
     val sdk = PythonSdkUtil.findPythonSdk(module)
-    if (sdk == null || PythonSdkUtil.isInvalid(sdk) || PythonSdkType.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON35)) {
+    if (sdk == null || PythonSdkUtil.isInvalid(sdk) || PySdkUtil.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON35)) {
       return ValidationResult("${provider.presentableName} support requires valid Python 3.5+ SDK")
     }
     val packageManager = PyPackageManager.getInstance(sdk)
@@ -93,7 +95,7 @@ class MicroPythonFacet(facetType: FacetType<out Facet<*>, *>, module: Module, na
         it.presentableText
       }
       return ValidationResult("Packages required for ${provider.presentableName} support not found: $requirementsText",
-                              object : FacetConfigurationQuickFix("Install requirements") {
+                              object : FacetConfigurationQuickFix("Install Requirements") {
         override fun run(place: JComponent?) {
           PyPackageManagerUI(module.project, sdk, null).install(requirements, emptyList())
         }
@@ -134,20 +136,20 @@ class MicroPythonFacet(facetType: FacetType<out Facet<*>, *>, module: Module, na
 
   fun getOrDetectDevicePathSynchronously(): String? =
       if (autoDetectDevicePath)
-        detectDevicePathSynchronously()
+        detectDevicePathSynchronously(configuration.deviceProvider)
       else
         devicePath
 
-  fun detectDevicePathSynchronously(): String? {
+  fun detectDevicePathSynchronously(deviceProvider: MicroPythonDeviceProvider): String? {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
     var detectedDevicePath: String? = null
-    val deviceProviderName = configuration.deviceProvider.presentableName
+    val deviceProviderName = deviceProvider.presentableName
     val progress = ProgressManager.getInstance()
 
     progress.runProcessWithProgressSynchronously({
       progress.progressIndicator.text = "Detecting connected $deviceProviderName devices..."
-      val detected = findSerialPorts(configuration.deviceProvider, progress.progressIndicator).firstOrNull()
+      val detected = findSerialPorts(deviceProvider, progress.progressIndicator).firstOrNull()
       ApplicationManager.getApplication().invokeLater {
         if (detected == null) {
           Messages.showErrorDialog(module.project,
@@ -159,7 +161,7 @@ class MicroPythonFacet(facetType: FacetType<out Facet<*>, *>, module: Module, na
         }
         detectedDevicePath = detected
       }
-    }, "Detecting MicroPython Devices", true, module.project, null)
+    }, "Detecting MicroPython devices", true, module.project, null)
     return detectedDevicePath
   }
 
