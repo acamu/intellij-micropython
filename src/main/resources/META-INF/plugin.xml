@@ -76,6 +76,8 @@
       </action>
       <action class="com.jetbrains.micropython.actions.RemoveAllFilesFromDeviceAction" id="RemoveAllFilesFromDeviceAction"
               text="Remove All Files from MicroPython Device"/>
+      <action class="com.jetbrains.micropython.actions.ReadAllFilesFromDeviceAction" id="ReadAllFilesFromDeviceAction"
+              text="Read All Files from MicroPython Device"/>
     </group>
   </actions>
 </idea-plugin>
