@@ -64,7 +64,7 @@ def main(args: List[str]) -> None:
 
 def wait_for_board() -> None:
     """Wait for some ESP8266 devices to become ready for REPL commands."""
-    time.sleep(0.5)
+    time.sleep(2.5)
 
 
 if __name__ == '__main__':
