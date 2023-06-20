@@ -75,6 +75,7 @@ class MicroPythonRunConfiguration(project: Project, factory: ConfigurationFactor
 
   var path: String = ""
   var runReplOnSuccess: Boolean = false
+  var runScriptOnly: Boolean = true
   override fun getValidModules() =
           allModules.filter { it.microPythonFacet != null }.toMutableList()
 
