@@ -45,15 +45,18 @@ class MicroPythonRunConfigurationEditor(config: MicroPythonRunConfiguration) : S
       FormBuilder.createFormBuilder()
           .addLabeledComponent("Path:", pathField)
           .addComponent(runReplOnSuccess)
+          .addComponent(runScriptOnly)
           .panel
 
   override fun applyEditorTo(s: MicroPythonRunConfiguration) {
     s.path = pathField.text
     s.runReplOnSuccess = runReplOnSuccess.isSelected
+    s.runScriptOnly = runScriptOnly.isSelected
   }
 
   override fun resetEditorFrom(s: MicroPythonRunConfiguration) {
     pathField.text = s.path
     runReplOnSuccess.isSelected = s.runReplOnSuccess
+    runScriptOnly.isSelected = s.runScriptOnly
   }
 }
